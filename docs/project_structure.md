@@ -10,7 +10,7 @@ Python-Docs-Assistant/
 ├── prompts.py
 │
 ├── knowledge_base/
-│   ├── pdfs/
+│   ├── raw/
 │   └── processed/
 │
 ├── vector_store/
