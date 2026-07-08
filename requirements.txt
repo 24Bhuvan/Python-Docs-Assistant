@@ -1,0 +1,6 @@
+langchain>=0.0.XX
+langchain-ollama>=0.0.YY
+langchain-nomic>=0.0.ZZ
+faiss-cpu>=1.7
+streamlit>=1.0
+PyMuPDF>=1.18
