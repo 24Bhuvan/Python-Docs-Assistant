@@ -40,7 +40,7 @@ from utils.vector_store import load_vector_store
 # =====================================================================
 
 # LLM Configuration
-LLM_MODEL = "phi3"
+LLM_MODEL = "phi3:mini"
 LLM_TEMPERATURE = 0
 
 # Retriever Configuration
@@ -294,7 +294,7 @@ def initialize_rag_pipeline() -> RAGPipeline:
         Initialized RAG pipeline instance
     """
     return RAGPipeline()
-
+    
 if __name__ == "__main__":
     rag = initialize_rag_pipeline()
 
