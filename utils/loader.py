@@ -16,10 +16,11 @@ This module does NOT:
 """
 
 from pathlib import Path
-import re
 from typing import List
+import re
 
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 from langchain_core.documents import Document
 
 
@@ -45,13 +46,11 @@ IGNORE_FILES = {
 
 
 # ---------------------------------------------------------------------
-# Helper Functions
+# Helpers
 # ---------------------------------------------------------------------
 
 def should_skip(file_path: Path) -> bool:
-    """
-    Determine whether a file should be skipped.
-    """
+    """Return True if a file should not be processed."""
 
     if any(part in IGNORE_DIRS for part in file_path.parts):
         return True
@@ -59,29 +58,36 @@ def should_skip(file_path: Path) -> bool:
     if file_path.name in IGNORE_FILES:
         return True
 
-    if file_path.suffix.lower() != ".html":
-        return True
+    return file_path.suffix.lower() != ".html"
 
-    return False
+
+def normalize_text(text: str) -> str:
+    """Normalize whitespace without altering content."""
+
+    text = text.replace("\r", "")
+
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)
+
+    return text.strip()
 
 
 def clean_html(html: str) -> tuple[str, str]:
     """
-    Parse HTML and extract meaningful documentation text.
+    Extract meaningful documentation content from a Sphinx HTML page.
 
     Returns
     -------
-    title : str
-    text : str
+    tuple(title, cleaned_text)
     """
 
     soup = BeautifulSoup(html, "html.parser")
 
     # -------------------------------------------------------------
-    # Remove unwanted elements
+    # Remove unwanted tags
     # -------------------------------------------------------------
 
-    for tag in soup.find_all([
+    for selector in (
         "nav",
         "header",
         "footer",
@@ -89,70 +95,79 @@ def clean_html(html: str) -> tuple[str, str]:
         "script",
         "style",
         "form",
-    ]):
-        tag.decompose()
-
-    # Remove common Sphinx/navigation classes
-    REMOVE_CLASSES = {
-        "sphinxsidebar",
-        "sphinxsidebarwrapper",
-        "related",
-        "footer",
-        "breadcrumbs",
-        "breadcrumb",
-        "search",
-        "searchbox",
-        "toc",
-        "toctree-wrapper",
-    }
-
-    for tag in soup.find_all(True):
-        classes = tag.get("class", [])
-
-        if any(cls in REMOVE_CLASSES for cls in classes):
+    ):
+        for tag in soup.select(selector):
             tag.decompose()
 
     # -------------------------------------------------------------
-    # Locate main documentation area
+    # Remove common Sphinx UI elements
+    # -------------------------------------------------------------
+
+    REMOVE_CLASSES = [
+        ".sphinxsidebar",
+        ".sphinxsidebarwrapper",
+        ".related",
+        ".footer",
+        ".breadcrumbs",
+        ".breadcrumb",
+        ".search",
+        ".searchbox",
+        ".wy-nav-side",
+        ".wy-side-nav-search",
+        ".wy-breadcrumbs",
+        ".toc",
+        ".toctree-wrapper",
+        ".headerlink",
+    ]
+
+    for selector in REMOVE_CLASSES:
+        for tag in soup.select(selector):
+            tag.decompose()
+
+    # -------------------------------------------------------------
+    # Find the documentation body
     # -------------------------------------------------------------
 
     main = (
         soup.find("main")
         or soup.find("article")
         or soup.find("div", class_="body")
+        or soup.find("div", class_="bodywrapper")
         or soup.find("div", class_="document")
+        or soup.find("div", role="main")
         or soup.body
     )
 
-    if main is None:
+    if not isinstance(main, Tag):
         return "", ""
+
+    # -------------------------------------------------------------
+    # Extract title
+    # -------------------------------------------------------------
 
     title = ""
 
-    if soup.title:
+    if soup.title is not None:
         title = soup.title.get_text(" ", strip=True)
 
-    text = main.get_text(separator="\n")
-
     # -------------------------------------------------------------
-    # Normalize whitespace
+    # Extract text
     # -------------------------------------------------------------
 
-    text = re.sub(r"\r", "", text)
-    text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    text = text.strip()
+    text = main.get_text(separator="\n", strip=True)
+
+    text = normalize_text(text)
 
     return title, text
 
 
 # ---------------------------------------------------------------------
-# Public Loader
+# Public API
 # ---------------------------------------------------------------------
 
 def load_documents() -> List[Document]:
     """
-    Load the Python HTML documentation.
+    Load all documentation pages.
 
     Returns
     -------
@@ -161,16 +176,13 @@ def load_documents() -> List[Document]:
 
     documents: List[Document] = []
 
-    html_files = []
-
-    for file_path in DOCS_ROOT.rglob("*.html"):
-
-        if should_skip(file_path):
-            continue
-
-        html_files.append(file_path)
-
-    html_files.sort()
+    html_files = sorted(
+        [
+            path
+            for path in DOCS_ROOT.rglob("*.html")
+            if not should_skip(path)
+        ]
+    )
 
     for html_file in html_files:
 
@@ -178,7 +190,7 @@ def load_documents() -> List[Document]:
 
             html = html_file.read_text(
                 encoding="utf-8",
-                errors="ignore"
+                errors="ignore",
             )
 
             title, text = clean_html(html)
@@ -209,17 +221,16 @@ def load_documents() -> List[Document]:
             )
 
         except Exception as exc:
+            print(f"Failed to load {html_file}")
+            print(type(exc).__name__, exc)
 
-            print(f"Failed to load {html_file}: {exc}")
-
-    # -----------------------------------------------------------------
+    # -------------------------------------------------------------
     # Verification
-    # -----------------------------------------------------------------
+    # -------------------------------------------------------------
 
     print("\n" + "=" * 60)
     print("Document Loader Summary")
     print("=" * 60)
-
     print(f"HTML Files Loaded : {len(html_files)}")
     print(f"Documents Created : {len(documents)}")
 
@@ -231,7 +242,6 @@ def load_documents() -> List[Document]:
 
         print("\nPreview")
         print("-" * 60)
-
         print(documents[0].page_content[:500])
 
     print("=" * 60 + "\n")
@@ -240,9 +250,8 @@ def load_documents() -> List[Document]:
 
 
 # ---------------------------------------------------------------------
-# Standalone Execution
+# Entry Point
 # ---------------------------------------------------------------------
 
 if __name__ == "__main__":
-
     load_documents()
