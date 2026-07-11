@@ -4,6 +4,7 @@ Backend API for the Python Documentation Assistant.
 Exposes a FastAPI REST interface to process user queries through the RAG pipeline.
 """
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status
@@ -95,8 +96,8 @@ async def chat_endpoint(payload: ChatRequest):
 
     # 2. Pipeline Execution
     try:
-        # Call the standalone RAG execution utility function
-        answer = get_response(clean_message)
+        # Run the blocking RAG call in a thread so FastAPI stays responsive.
+        answer = await asyncio.to_thread(get_response, clean_message)
         
         logger.info("Successfully generated pipeline response.")
         return ChatResponse(answer=answer, status="success")
