@@ -21,13 +21,22 @@ It does NOT:
 from rag import initialize_rag_pipeline
 
 # ---------------------------------------------------------------------
-# Initialize RAG pipeline once
+# Initialize lazily on first use so the app does not block on startup
 # ---------------------------------------------------------------------
 
-try:
-    rag_pipeline = initialize_rag_pipeline()
-except Exception:
-    rag_pipeline = None
+rag_pipeline = None
+
+
+def _get_rag_pipeline():
+    global rag_pipeline
+
+    if rag_pipeline is None:
+        try:
+            rag_pipeline = initialize_rag_pipeline()
+        except Exception:
+            rag_pipeline = None
+
+    return rag_pipeline
 
 
 # ---------------------------------------------------------------------
@@ -63,7 +72,8 @@ def get_response(query: str) -> str:
     # -------------------------------------------------------------
     # Check RAG initialization
     # -------------------------------------------------------------
-    if rag_pipeline is None:
+    pipeline = _get_rag_pipeline()
+    if pipeline is None:
         return (
             "The chatbot service is currently unavailable because "
             "the RAG pipeline could not be initialized."
@@ -73,7 +83,7 @@ def get_response(query: str) -> str:
     # Generate answer
     # -------------------------------------------------------------
     try:
-        answer, _ = rag_pipeline.query(query)
+        answer, _ = pipeline.query(query)
         return answer
 
     except Exception:
