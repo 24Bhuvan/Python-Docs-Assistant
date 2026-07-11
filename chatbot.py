@@ -4,6 +4,7 @@ Chatbot service for the Python Documentation Assistant.
 Responsibilities
 ----------------
 - Validate user input
+- Enforce Python-domain restrictions
 - Call the RAG pipeline
 - Return the generated response
 - Handle errors gracefully
@@ -18,6 +19,8 @@ It does NOT:
 - Initialize FAISS manually
 """
 
+import re
+
 from rag import initialize_rag_pipeline
 
 # ---------------------------------------------------------------------
@@ -25,6 +28,111 @@ from rag import initialize_rag_pipeline
 # ---------------------------------------------------------------------
 
 rag_pipeline = None
+
+PYTHON_DOMAIN_REFUSAL = (
+    "I'm a Python Documentation Assistant. I can answer questions only about Python programming "
+    "and the official Python documentation. Please ask a Python-related question."
+)
+
+PYTHON_TERMS = {
+    "python",
+    "pythonic",
+    "import",
+    "module",
+    "modules",
+    "function",
+    "functions",
+    "method",
+    "methods",
+    "class",
+    "classes",
+    "object",
+    "objects",
+    "list",
+    "lists",
+    "tuple",
+    "tuples",
+    "dict",
+    "dictionary",
+    "dictionaries",
+    "set",
+    "sets",
+    "syntax",
+    "decorator",
+    "decorators",
+    "generator",
+    "generators",
+    "iterator",
+    "iterators",
+    "comprehension",
+    "comprehensions",
+    "async",
+    "await",
+    "exception",
+    "exceptions",
+    "error",
+    "errors",
+    "traceback",
+    "tracebacks",
+    "pathlib",
+    "itertools",
+    "typing",
+    "annotation",
+    "annotations",
+    "dataclass",
+    "dataclasses",
+    "venv",
+    "virtualenv",
+    "pip",
+    "package",
+    "packages",
+    "stdlib",
+    "builtin",
+    "builtin",
+    "documentation",
+    "docstring",
+    "docstrings",
+    "loop",
+    "loops",
+    "variable",
+    "variables",
+    "lambda",
+    "inheritance",
+    "subclass",
+    "super",
+    "staticmethod",
+    "classmethod",
+    "metaclass",
+    "metaclasses",
+    "json",
+    "pickle",
+    "os",
+    "sys",
+    "re",
+    "math",
+    "collections",
+    "requests",
+    "pytest",
+    "unittest",
+}
+
+
+def _is_python_related_query(query: str) -> bool:
+    """Return True when the question appears to be about Python or its documentation."""
+    normalized = re.sub(r"[^a-z0-9]+", " ", query.lower()).strip()
+
+    if not normalized:
+        return False
+
+    if "python" in normalized:
+        return True
+
+    tokens = set(normalized.split())
+
+    if tokens & PYTHON_TERMS:
+        return True
+
+    return False
 
 
 def _get_rag_pipeline():
@@ -68,6 +176,9 @@ def get_response(query: str) -> str:
 
     if not query:
         return "Please enter a question about Python."
+
+    if not _is_python_related_query(query):
+        return PYTHON_DOMAIN_REFUSAL
 
     # -------------------------------------------------------------
     # Check RAG initialization

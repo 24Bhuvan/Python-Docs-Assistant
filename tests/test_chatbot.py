@@ -67,6 +67,18 @@ def test_get_response_successful_pipeline_query(mock_init):
 
 
 @patch("chatbot.initialize_rag_pipeline")
+def test_get_response_refuses_non_python_queries(mock_init):
+    """Verify out-of-domain questions are refused before the RAG pipeline runs."""
+    response = get_response("Who is Narendra Modi?")
+
+    mock_init.assert_not_called()
+    assert response == (
+        "I'm a Python Documentation Assistant. I can answer questions only about Python programming "
+        "and the official Python documentation. Please ask a Python-related question."
+    )
+
+
+@patch("chatbot.initialize_rag_pipeline")
 def test_get_response_unexpected_query_exception(mock_init):
     """Verify runtime method queries catch internal framework errors cleanly[cite: 4]."""
     mock_pipeline = MagicMock()
