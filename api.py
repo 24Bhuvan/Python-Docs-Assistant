@@ -58,7 +58,9 @@ class ChatRequest(BaseModel):
     message: str = Field(
         ..., 
         description="The query question regarding Python documentation.",
-        example="What is a list comprehension?"
+        json_schema_extra={
+        "example": "What is a list comprehension?"
+        },
     )
 
 
@@ -88,7 +90,7 @@ async def chat_endpoint(payload: ChatRequest):
     if not clean_message:
         logger.warning("Rejected request: Message field contains only empty whitespace string.")
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="The 'message' parameter cannot be empty or solely whitespace."
         )
 
