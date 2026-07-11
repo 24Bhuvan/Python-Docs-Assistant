@@ -18,6 +18,7 @@ This module does NOT:
 """
 
 import logging
+import os
 from pathlib import Path
 from typing import List, Tuple
 
@@ -40,8 +41,9 @@ from utils.vector_store import load_vector_store
 # =====================================================================
 
 # LLM Configuration
-LLM_MODEL = "phi3"
+LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "phi3:latest")
 LLM_TEMPERATURE = 0
+LLM_TIMEOUT_SECONDS = int(os.getenv("OLLAMA_LLM_TIMEOUT_SECONDS", "90"))
 
 # Retriever Configuration
 RETRIEVER_K = 5
@@ -106,6 +108,8 @@ class RAGPipeline:
             self.llm = ChatOllama(
                 model=LLM_MODEL,
                 temperature=LLM_TEMPERATURE,
+                base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+                client_kwargs={"timeout": LLM_TIMEOUT_SECONDS},
             )
             logger.info(f"✓ LLM initialized: {LLM_MODEL} (temperature={LLM_TEMPERATURE})")
 
