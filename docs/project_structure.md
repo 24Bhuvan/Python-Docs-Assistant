@@ -7,7 +7,6 @@ Python-Docs-Assistant/
 ├── chatbot.py                      # Chatbot service
 ├── rag.py                          # Retrieval-Augmented Generation pipeline
 ├── prompts.py                      # Prompt templates
-├── config.py                       # Project configuration
 │
 ├── frontend/                       # React frontend application
 │
@@ -57,7 +56,6 @@ Python-Docs-Assistant/
 | `api.py` | FastAPI backend exposing REST endpoints for the React frontend |
 | `chatbot.py` | Chatbot service that validates user input and communicates with the RAG pipeline |
 | `rag.py` | Core Retrieval-Augmented Generation pipeline integrating FAISS, embeddings, and the Phi-3 Mini LLM |
-| `config.py` | Centralized project configuration and constants |
 | `prompts.py` | System prompts and prompt templates used by the RAG pipeline |
 | `frontend/` | React application providing the user interface |
 | `knowledge_base/raw/` | Official Python HTML documentation used as the knowledge source |
