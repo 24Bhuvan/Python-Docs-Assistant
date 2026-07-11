@@ -67,6 +67,20 @@ def test_get_response_successful_pipeline_query(mock_init):
 
 
 @patch("chatbot.initialize_rag_pipeline")
+def test_get_response_accepts_builtin_name_queries(mock_init):
+    """Verify common Python built-in names are treated as Python documentation queries."""
+    mock_pipeline = MagicMock()
+    mock_pipeline.query.return_value = ("print() writes to standard output.", {"source": "docs"})
+    mock_init.return_value = mock_pipeline
+
+    response = get_response("explain print()")
+
+    mock_init.assert_called_once_with()
+    mock_pipeline.query.assert_called_once_with("explain print()")
+    assert response == "print() writes to standard output."
+
+
+@patch("chatbot.initialize_rag_pipeline")
 def test_get_response_refuses_non_python_queries(mock_init):
     """Verify out-of-domain questions are refused before the RAG pipeline runs."""
     response = get_response("Who is Narendra Modi?")
