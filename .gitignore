@@ -4,17 +4,24 @@ __pycache__/
 *$py.class
 
 # Virtual environments
-venv/
 .venv/
+venv/
 env/
 ENV/
 
-# Packaging
+# Distribution
 build/
 dist/
 *.egg-info/
 .eggs/
-pip-wheel-metadata/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
 
 # Environment variables
 .env
@@ -24,34 +31,41 @@ pip-wheel-metadata/
 # IDEs
 .vscode/
 .idea/
-*.code-workspace
+*.iml
 
-# Jupyter
-.ipynb_checkpoints/
-
-# Testing & coverage
-.pytest_cache/
-.coverage
-coverage.xml
-htmlcov/
-.mypy_cache/
-.ruff_cache/
+# Operating system
+.DS_Store
+Thumbs.db
+desktop.ini
 
 # Logs
 *.log
 logs/
 
-# Generated artifacts
-vector_store/
+# Local models
+models/
+*.gguf
+*.bin
+*.safetensors
+
+# Generated knowledge base
 knowledge_base/processed/
+vector_store/
+
+# React
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
 
 # Temporary files
+tmp/
+temp/
 *.tmp
-*.temp
 *.bak
-.DS_Store
-Thumbs.db
+*.swp
 
-# Model cache
-.cache/
-huggingface_cache/
+# Keep empty project directories
+!knowledge_base/processed/.gitkeep
+!vector_store/.gitkeep
+!models/.gitkeep
+!screenshots/.gitkeep
