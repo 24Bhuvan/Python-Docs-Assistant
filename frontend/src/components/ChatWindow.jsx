@@ -25,6 +25,7 @@ export const ChatWindow = ({ messages, isLoading }) => {
         <div className="message-row assistant-row">
           <div className="message-avatar assistant-avatar">🐍</div>
           <div className="message-bubble assistant-bubble loading-bubble">
+            <span>Thinking...</span>
             <span className="dot"></span>
             <span className="dot"></span>
             <span className="dot"></span>

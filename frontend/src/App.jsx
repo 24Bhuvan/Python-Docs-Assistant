@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { ChatWindow } from "./components/ChatWindow";
 import { ChatInput } from "./components/ChatInput";
 import { sendChatMessage } from "./services/api";
@@ -8,23 +8,34 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const inputRef = useRef(null);
+  const isRequestInFlightRef = useRef(false);
 
   const handleSendMessage = async (text) => {
+    const trimmedText = text.trim();
+
+    if (!trimmedText || isRequestInFlightRef.current) {
+      return;
+    }
+
     setError(null);
-    const userMessage = { role: "user", content: text };
-    
-    // Optimistically update conversation layout stream
+    const userMessage = { role: "user", content: trimmedText };
+
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
+    isRequestInFlightRef.current = true;
 
     try {
-      const assistantAnswer = await sendChatMessage(text);
+      const assistantAnswer = await sendChatMessage(trimmedText);
       setMessages((prev) => [...prev, { role: "assistant", content: assistantAnswer }]);
-    } catch (err) {
-      // Direct assignment of explicit semantic error strings thrown by api.js
-      setError(err.message || "An unexpected error occurred during request transmission.");
+    } catch {
+      const assistantErrorMessage = "Unable to connect to the backend. Please try again.";
+      setMessages((prev) => [...prev, { role: "assistant", content: assistantErrorMessage }]);
+      setError(assistantErrorMessage);
     } finally {
       setIsLoading(false);
+      isRequestInFlightRef.current = false;
+      inputRef.current?.focus();
     }
   };
 
@@ -45,7 +56,7 @@ function App() {
       </main>
 
       <footer className="footer-container">
-        <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+        <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} inputRef={inputRef} />
         <p className="footer-credits">Powered by React + FastAPI Backend</p>
       </footer>
     </div>

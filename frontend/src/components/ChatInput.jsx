@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export const ChatInput = ({ onSendMessage, isLoading }) => {
+export const ChatInput = ({ onSendMessage, isLoading, inputRef }) => {
   const [text, setText] = useState("");
 
   const handleSubmit = (e) => {
@@ -14,6 +14,7 @@ export const ChatInput = ({ onSendMessage, isLoading }) => {
   return (
     <form className="input-form" onSubmit={handleSubmit}>
       <input
+        ref={inputRef}
         type="text"
         className="chat-input"
         placeholder="Ask a question about Python..."
